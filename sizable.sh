@@ -3,8 +3,6 @@
 # filesystem_analyzer.sh
 # A parallel filesystem crawler that provides detailed statistics about files and directories
 #
-# Author: Your Name
-# Date: December 22, 2024
 
 set -euo pipefail
 
