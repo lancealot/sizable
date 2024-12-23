@@ -8,6 +8,9 @@
 
 set -euo pipefail
 
+# Record start time
+start_time=$(date +%s.%N)
+
 # Default values
 PARALLEL_PROCS=8
 VERBOSE=false
@@ -189,10 +192,10 @@ if [[ -z "$(find "$TARGET_PATH" -type f -print -quit)" ]]; then
     echo "Warning: No files found in specified directory."
     echo "Total Files: 0"
     echo "Size Distribution:"
-    echo "  Small Files (<Q1): 0"
-    echo "  Medium-Small Files (Q1-Q2): 0"
-    echo "  Medium-Large Files (Q2-Q3): 0"
-    echo "  Large Files (>Q3): 0"
+    echo "  Files under 1 KB: 0"
+    echo "  Files between 1 KB and 100 KB: 0"
+    echo "  Files between 100 KB and 1 MB: 0"
+    echo "  Files over 1 MB: 0"
     echo "Average File Size: 0 bytes"
     echo "Total Directories: 0"
     exit 0
@@ -237,6 +240,18 @@ function round_to_power_of_2(bytes) {
     return power
 }
 
+function floor_to_power_of_2(bytes) {
+    power = 1
+    while (power * 2 <= bytes) power *= 2
+    return power
+}
+
+function ceil_to_power_of_2(bytes) {
+    power = 1
+    while (power < bytes) power *= 2
+    return power
+}
+
 function human_readable(bytes) {
     if (bytes < 1024) return bytes " B"
     if (bytes < 1048576) return sprintf("%d KB", bytes/1024)
@@ -258,9 +273,11 @@ function human_readable(bytes) {
 }
 END {
     avg_size = files_processed > 0 ? total_weighted_avg/files_processed : 0
-    q1_rounded = round_to_power_of_2(q1)
-    q2_rounded = round_to_power_of_2(q2)
-    q3_rounded = round_to_power_of_2(q3)
+    
+    # Use different rounding for range boundaries
+    q1_rounded = floor_to_power_of_2(q1)
+    q2_rounded = ceil_to_power_of_2(q2)
+    q3_rounded = ceil_to_power_of_2(q3)
     
     print "Total Files:", total_files
     print "\nSize Distribution:"
@@ -274,5 +291,10 @@ END {
 # Directory count
 dir_count=$(find "$TARGET_PATH" -type d | wc -l)
 echo "Total Directories: $dir_count"
+
+# Calculate and display execution time
+end_time=$(date +%s.%N)
+execution_time=$(echo "$end_time - $start_time" | bc)
+printf "\nExecution time: %.2f seconds\n" "$execution_time"
 
 log "Analysis complete!"
