@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# filesystem_analyzer.sh
+# 
 # A parallel filesystem crawler that provides detailed statistics about files and directories
 #
 
